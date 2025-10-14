@@ -1,0 +1,11 @@
+weather-dashboard/
+  backend/
+    server.js
+  frontend/
+    public/
+    src/
+       App.js
+       WeatherCard.js
+       ForecastChart.js
+       styles.css
+  README.md
