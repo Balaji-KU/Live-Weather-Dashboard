@@ -1,75 +1,160 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Live Weather Dashboard</title>
   <style>
-    body {
-      font-family: Arial, sans-serif;
-      background: linear-gradient(to bottom right, #89f7fe, #66a6ff);
-      color: #222;
-      text-align: center;
+    /* Reset some default styles */
+    * {
+      box-sizing: border-box;
       margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: 'Arial', sans-serif;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: flex-start;
+      min-height: 100vh;
+      background: linear-gradient(to bottom, #89f7fe, #66a6ff);
+      transition: background 0.5s ease;
       padding: 2rem;
+      color: #222;
     }
-    .weather-card {
-      background: white;
-      border-radius: 16px;
-      padding: 1.5rem;
-      width: 300px;
-      margin: 0 auto;
-      box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+
+    h1 {
+      margin-bottom: 2rem;
     }
+
+    .search {
+      display: flex;
+      margin-bottom: 2rem;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 0.5rem;
+    }
+
     input {
-      padding: 0.5rem;
-      width: 200px;
-      border: none;
-      border-radius: 6px;
-      margin-right: 8px;
-    }
-    button {
       padding: 0.5rem 1rem;
       border: none;
-      background: #007bff;
-      color: white;
       border-radius: 6px;
-      cursor: pointer;
+      width: 200px;
+      font-size: 1rem;
     }
+
+    button {
+      padding: 0.5rem 1.2rem;
+      border: none;
+      border-radius: 6px;
+      background-color: #007bff;
+      color: white;
+      font-size: 1rem;
+      cursor: pointer;
+      transition: background 0.3s;
+    }
+
     button:hover {
-      background: #0056b3;
+      background-color: #0056b3;
+    }
+
+    .weather-card {
+      background: rgba(255, 255, 255, 0.9);
+      border-radius: 16px;
+      padding: 2rem;
+      width: 300px;
+      text-align: center;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+      transition: transform 0.3s;
+    }
+
+    .weather-card:hover {
+      transform: scale(1.05);
+    }
+
+    .weather-card img {
+      width: 100px;
+      height: 100px;
+    }
+
+    p {
+      margin: 0.5rem 0;
+      font-size: 1.1rem;
+    }
+
+    @media (max-width: 400px) {
+      .weather-card {
+        width: 90%;
+        padding: 1.5rem;
+      }
+
+      input {
+        width: 60%;
+      }
     }
   </style>
 </head>
 <body>
   <h1>🌦 Live Weather Dashboard</h1>
-  <input type="text" id="city" placeholder="Enter city name" />
-  <button onclick="getWeather()">Get Weather</button>
-
-  <div class="weather-card" id="weather"></div>
+  <div class="search">
+    <input type="text" id="city" placeholder="Enter city name">
+    <button onclick="getWeather()">Get Weather</button>
+  </div>
+  <div id="weather"></div>
 
   <script>
-    const apiKey = "YOUR_API_KEY"; // Replace with your OpenWeatherMap API key
+    const apiKey = "YOUR_REAL_API_KEY_HERE"; // 🔑 Replace with your API key
+
+    const weatherBackgrounds = {
+      Clear: 'linear-gradient(to bottom, #fddb92, #d1fdff)',
+      Clouds: 'linear-gradient(to bottom, #bdc3c7, #2c3e50)',
+      Rain: 'linear-gradient(to bottom, #4e54c8, #8f94fb)',
+      Snow: 'linear-gradient(to bottom, #e0eafc, #cfdef3)',
+      Drizzle: 'linear-gradient(to bottom, #89f7fe, #66a6ff)',
+      Thunderstorm: 'linear-gradient(to bottom, #141e30, #243b55)',
+      Mist: 'linear-gradient(to bottom, #606c88, #3f4c6b)'
+    };
 
     async function getWeather() {
       const city = document.getElementById("city").value.trim();
-      if (!city) return alert("Please enter a city name.");
+      const weatherDiv = document.getElementById("weather");
+      weatherDiv.innerHTML = "";
+
+      if (!city) {
+        weatherDiv.innerHTML = `<p style="color:red;">⚠️ Please enter a city name.</p>`;
+        return;
+      }
+
       const url = `https://api.openweathermap.org/data/2.5/weather?q=${city}&appid=${apiKey}&units=metric`;
 
       try {
+        weatherDiv.innerHTML = `<p>Loading...</p>`;
         const response = await fetch(url);
         const data = await response.json();
-        if (data.cod !== 200) throw new Error(data.message);
 
-        document.getElementById("weather").innerHTML = `
-          <h2>${data.name}, ${data.sys.country}</h2>
-          <p>Temperature: ${data.main.temp} °C</p>
-          <p>Humidity: ${data.main.humidity} %</p>
-          <p>Wind: ${data.wind.speed} m/s</p>
-          <p>Weather: ${data.weather[0].description}</p>
+        if (response.status !== 200) throw new Error(data.message || "Unable to fetch weather");
+
+        const weatherMain = data.weather[0].main;
+        const iconUrl = `https://openweathermap.org/img/wn/${data.weather[0].icon}@2x.png`;
+
+        // Change background based on weather
+        document.body.style.background = weatherBackgrounds[weatherMain] || 'linear-gradient(to bottom, #89f7fe, #66a6ff)';
+
+        weatherDiv.innerHTML = `
+          <div class="weather-card">
+            <h2>${data.name}, ${data.sys.country}</h2>
+            <img src="${iconUrl}" alt="${data.weather[0].description}" />
+            <p>🌡 Temperature: ${data.main.temp} °C</p>
+            <p>💧 Humidity: ${data.main.humidity} %</p>
+            <p>🌬 Wind: ${data.wind.speed} m/s</p>
+            <p>☁️ Weather: ${data.weather[0].description}</p>
+          </div>
         `;
-      } catch (err) {
-        document.getElementById("weather").innerHTML = `<p style="color:red;">${err.message}</p>`;
+      } catch (error) {
+        weatherDiv.innerHTML = `<p style="color:red;">❌ ${error.message}</p>`;
+        console.error("Error:", error);
       }
     }
   </script>
